@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON → CSV Converter</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0e1117;
+            --surface: #161b22;
+            --surface-hover: #1c2129;
+            --border: #30363d;
+            --border-focus: #58a6ff;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #79c0ff;
+            --green: #3fb950;
+            --red: #f85149;
+            --font-body: 'DM Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
+        }
+
+        header h1 span { color: var(--accent); }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        nav a {
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        nav a.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        nav a:not(.active) {
+            background: var(--surface);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        nav a:not(.active):hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .wrapper-control {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .wrapper-control label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+
+        .wrapper-control input[type="checkbox"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+
+        .wrapper-control input[type="checkbox"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .wrapper-control input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .wrapper-key-input {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.4rem 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            width: 140px;
+            transition: border-color 0.2s, opacity 0.2s;
+        }
+
+        .wrapper-key-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .wrapper-key-input:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .separator-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .separator-control label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .separator-control select {
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            padding: 0.4rem 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .separator-control select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .panels { grid-template-columns: 1fr; }
+            .separator-control { margin-left: 0; }
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .panel-header h2 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .btn-small {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.3rem 0.7rem;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-small:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .btn-small.download {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .btn-small.download:hover {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.75rem;
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .drop-zone p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .drop-zone p span {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .drop-zone .file-name {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--green);
+            margin-top: 0.4rem;
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        textarea {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.6;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            padding: 1rem;
+            resize: vertical;
+            min-height: 340px;
+            flex: 1;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        textarea.output {
+            background: #0d1117;
+            cursor: default;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.65rem 2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            min-height: 1.4em;
+        }
+
+        .status.success { color: var(--green); }
+        .status.error { color: var(--red); }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            line-height: 1.8;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer a:hover { text-decoration: underline; }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--green);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>JSON <span>→</span> CSV</h1>
+            <p>Convert JSON arrays to CSV format</p>
+        </header>
+
+        <nav>
+            <a href="json-to-csv.html" class="active">JSON → CSV</a>
+            <a href="csv-to-json.html">CSV → JSON</a>
+        </nav>
+
+        <div class="controls">
+            <div class="wrapper-control">
+                <label>
+                    <input type="checkbox" id="removeWrapper" checked>
+                    Remove wrapper key
+                </label>
+                <input type="text" class="wrapper-key-input" id="wrapperKey" value="quotes" placeholder="key name">
+            </div>
+            <div class="separator-control">
+                <label for="separator">Separator</label>
+                <select id="separator">
+                    <option value=",">Comma (CSV)</option>
+                    <option value="&#9;">Tab (TSV)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="panels">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Input — JSON</h2>
+                    <div class="panel-actions">
+                        <button class="btn-small" onclick="clearInput()">Clear</button>
+                    </div>
+                </div>
+                <div class="drop-zone" id="dropZone">
+                    <p>Drag &amp; drop a <span>.json</span> file here, or <span>click to browse</span></p>
+                    <div class="file-name" id="fileName"></div>
+                    <input type="file" id="fileInput" accept=".json,application/json">
+                </div>
+                <textarea id="inputArea" placeholder='Paste your JSON here, e.g.&#10;{&#10;  "quotes": [&#10;    { "text": "Hello", "source": "World" }&#10;  ]&#10;}'></textarea>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Output — CSV</h2>
+                    <div class="panel-actions">
+                        <button class="btn-small" onclick="copyOutput()">Copy</button>
+                        <button class="btn-small download" onclick="downloadOutput()">Download</button>
+                    </div>
+                </div>
+                <textarea id="outputArea" class="output" readonly placeholder="Converted CSV will appear here..."></textarea>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary" onclick="convert()">Convert</button>
+            <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <footer>
+            Conversion approach inspired by
+            <a href="https://github.com/FlatFilers/csvjson-app" target="_blank" rel="noopener">csvjson-app</a>
+            by FlatFilers (MIT).
+            <br>
+            Built for <a href="https://polaris.domains" target="_blank" rel="noopener">polaris.domains</a>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const inputArea = document.getElementById('inputArea');
+        const outputArea = document.getElementById('outputArea');
+        const removeWrapperCheckbox = document.getElementById('removeWrapper');
+        const wrapperKeyInput = document.getElementById('wrapperKey');
+        const separatorSelect = document.getElementById('separator');
+        const statusEl = document.getElementById('status');
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileNameEl = document.getElementById('fileName');
+
+        // Toggle wrapper key input based on checkbox
+        removeWrapperCheckbox.addEventListener('change', () => {
+            wrapperKeyInput.disabled = !removeWrapperCheckbox.checked;
+        });
+
+        // File input handling
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) loadFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) loadFile(e.dataTransfer.files[0]);
+        });
+
+        function loadFile(file) {
+            if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+                setStatus('Please select a .json file', 'error');
+                return;
+            }
+            fileNameEl.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                inputArea.value = e.target.result;
+                setStatus('File loaded — ready to convert', 'success');
+            };
+            reader.onerror = () => setStatus('Error reading file', 'error');
+            reader.readAsText(file);
+        }
+
+        function convert() {
+            const raw = inputArea.value.trim();
+            if (!raw) {
+                setStatus('Nothing to convert — paste or upload JSON first', 'error');
+                return;
+            }
+
+            let parsed;
+            try {
+                parsed = JSON.parse(raw);
+            } catch (e) {
+                setStatus('Invalid JSON: ' + e.message, 'error');
+                return;
+            }
+
+            // Extract the array
+            let dataArray;
+            if (removeWrapperCheckbox.checked) {
+                const key = wrapperKeyInput.value.trim();
+                if (!key) {
+                    setStatus('Enter a wrapper key name', 'error');
+                    return;
+                }
+                if (!parsed.hasOwnProperty(key)) {
+                    setStatus(`Key "${key}" not found in JSON. Available keys: ${Object.keys(parsed).join(', ')}`, 'error');
+                    return;
+                }
+                dataArray = parsed[key];
+            } else {
+                dataArray = parsed;
+            }
+
+            if (!Array.isArray(dataArray)) {
+                setStatus('The selected data is not an array', 'error');
+                return;
+            }
+
+            if (dataArray.length === 0) {
+                setStatus('The array is empty — nothing to convert', 'error');
+                return;
+            }
+
+            // Gather all unique keys across all objects
+            const allKeys = [];
+            const keySet = new Set();
+            dataArray.forEach(item => {
+                if (typeof item === 'object' && item !== null) {
+                    Object.keys(item).forEach(k => {
+                        if (!keySet.has(k)) {
+                            keySet.add(k);
+                            allKeys.push(k);
+                        }
+                    });
+                }
+            });
+
+            if (allKeys.length === 0) {
+                setStatus('No object keys found in the array', 'error');
+                return;
+            }
+
+            const sep = separatorSelect.value;
+
+            // Build CSV
+            const escapeField = (val) => {
+                if (val === null || val === undefined) return '';
+                const str = String(val);
+                if (str.includes(sep) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            };
+
+            const lines = [];
+            // Header row
+            lines.push(allKeys.map(escapeField).join(sep));
+            // Data rows
+            dataArray.forEach(item => {
+                const row = allKeys.map(k => {
+                    const val = (typeof item === 'object' && item !== null) ? item[k] : '';
+                    // If nested object/array, stringify it
+                    if (typeof val === 'object' && val !== null) return escapeField(JSON.stringify(val));
+                    return escapeField(val);
+                });
+                lines.push(row.join(sep));
+            });
+
+            outputArea.value = lines.join('\n');
+            setStatus(`Converted ${dataArray.length} rows with ${allKeys.length} columns`, 'success');
+        }
+
+        function copyOutput() {
+            const text = outputArea.value;
+            if (!text) {
+                setStatus('Nothing to copy', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard');
+            }).catch(() => {
+                // Fallback
+                outputArea.select();
+                document.execCommand('copy');
+                showToast('Copied to clipboard');
+            });
+        }
+
+        function downloadOutput() {
+            const text = outputArea.value;
+            if (!text) {
+                setStatus('Nothing to download', 'error');
+                return;
+            }
+            const ext = separatorSelect.value === '\t' ? 'tsv' : 'csv';
+            const sourceName = fileNameEl.textContent;
+            const baseName = sourceName ? sourceName.replace(/\.json$/i, '') : 'output';
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseName}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`Downloaded ${baseName}.${ext}`);
+        }
+
+        function clearInput() {
+            inputArea.value = '';
+            fileNameEl.textContent = '';
+            fileInput.value = '';
+            setStatus('');
+        }
+
+        function clearAll() {
+            clearInput();
+            outputArea.value = '';
+        }
+
+        function setStatus(msg, type) {
+            statusEl.textContent = msg;
+            statusEl.className = 'status' + (type ? ' ' + type : '');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+    </script>
+</body>
+</html>
