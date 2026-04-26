@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holiday Planner — Date Formatter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f3ec;
+      --card: #ffffff;
+      --navy: #1a2744;
+      --navy-light: #2a3f6a;
+      --gold: #c8993a;
+      --gold-light: #f5e9cc;
+      --gold-mid: #e8cc88;
+      --muted: #8b7d6b;
+      --border: #e4dbd0;
+      --radius: 14px;
+      --shadow: 0 2px 24px rgba(26,39,68,0.07);
+      --shadow-lg: 0 8px 40px rgba(26,39,68,0.14);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(200,153,58,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(26,39,68,0.06) 0%, transparent 50%);
+      color: var(--navy);
+      min-height: 100vh;
+      padding: 2.5rem 1rem 3rem;
+    }
+
+    .container {
+      max-width: 660px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-mark {
+      font-size: 1.6rem;
+      margin-bottom: 0.75rem;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .gold-rule {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.9rem auto;
+      width: fit-content;
+    }
+
+    .gold-rule::before,
+    .gold-rule::after {
+      content: '';
+      display: block;
+      width: 48px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, var(--gold));
+    }
+    .gold-rule::after { background: linear-gradient(90deg, var(--gold), transparent); }
+
+    .gold-rule span {
+      color: var(--gold);
+      font-size: 0.85rem;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 300;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 1.6rem;
+      margin-bottom: 1.1rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .card:hover { box-shadow: var(--shadow-lg); }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .step-badge {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--gold), #a87830);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Date Range ── */
+    .date-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.45rem;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--navy);
+      background: #fdfaf6;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="date"]:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(200,153,58,0.15);
+    }
+
+    /* ── Tokens ── */
+    .tokens-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .token-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.65rem 0.85rem;
+      background: #fdfaf6;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      cursor: grab;
+      user-select: none;
+      transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+    }
+
+    .token-row.dragging {
+      opacity: 0.45;
+      cursor: grabbing;
+    }
+
+    .token-row.drag-over {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(200,153,58,0.18);
+      background: var(--gold-light);
+    }
+
+    .drag-handle {
+      color: var(--border);
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: grab;
+      flex-shrink: 0;
+    }
+
+    .token-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      width: 88px;
+      flex-shrink: 0;
+    }
+
+    .token-options {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .tok-btn {
+      padding: 0.25rem 0.65rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      font-size: 0.82rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 400;
+    }
+
+    .tok-btn:hover { border-color: var(--gold-mid); color: var(--navy); }
+
+    .tok-btn.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: white;
+      font-weight: 500;
+    }
+
+    .tok-btn.active.is-off {
+      background: var(--border);
+      border-color: #c8b8a0;
+      color: var(--muted);
+    }
+
+    /* ── Separator ── */
+    .separator-row {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .separator-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .sep-options { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+
+    /* ── Format Preview ── */
+    .format-preview {
+      margin-top: 1.1rem;
+      padding: 0.65rem 0.9rem;
+      background: linear-gradient(135deg, var(--gold-light), #f0e4c0);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      border: 1px solid var(--gold-mid);
+    }
+
+    .format-preview strong {
+      color: var(--navy);
+      font-weight: 600;
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+    }
+
+    /* ── Style Controls ── */
+    .style-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .style-toggle {
+      width: 44px;
+      height: 44px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: #fdfaf6;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--navy);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .style-toggle:hover { border-color: var(--gold-mid); }
+
+    .style-toggle.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: white;
+    }
+
+    #underlineBtn { text-decoration: underline; }
+    #italicBtn { font-style: italic; }
+
+    .style-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .size-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    select.size-select {
+      padding: 0.5rem 0.85rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--navy);
+      background: #fdfaf6;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    select.size-select:focus { border-color: var(--gold); }
+
+    /* ── Spacing ── */
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      overflow: hidden;
+      background: #fdfaf6;
+    }
+
+    .stepper button {
+      width: 42px;
+      height: 42px;
+      border: none;
+      background: transparent;
+      color: var(--navy);
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .stepper button:hover { background: var(--gold-light); }
+
+    .stepper-val {
+      min-width: 48px;
+      text-align: center;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--navy);
+      border-left: 1.5px solid var(--border);
+      border-right: 1.5px solid var(--border);
+      padding: 0 0.5rem;
+      line-height: 42px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .spacing-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    /* ── Generate Button ── */
+    .generate-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      color: var(--gold);
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(26,39,68,0.2);
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+
+    .generate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(26,39,68,0.28);
+    }
+
+    .generate-btn:active { transform: translateY(0); }
+
+    /* ── Output Card ── */
+    .output-card {
+      background: var(--navy);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 30px rgba(26,39,68,0.2);
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.1);
+    }
+
+    .output-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .copy-btn {
+      padding: 0.45rem 1.3rem;
+      background: linear-gradient(135deg, var(--gold), #a87830);
+      border: none;
+      border-radius: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.03em;
+    }
+
+    .copy-btn:hover { filter: brightness(1.1); }
+    .copy-btn:active { transform: scale(0.97); }
+    .copy-btn.copied { background: linear-gradient(135deg, #3a9e5f, #2a7a48); }
+
+    .output-body {
+      padding: 1.75rem;
+      min-height: 140px;
+      color: rgba(255,255,255,0.88);
+      line-height: 1.9;
+    }
+
+    .empty-msg {
+      color: rgba(255,255,255,0.25);
+      font-style: italic;
+      font-size: 0.9rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-top: 1.5rem;
+      opacity: 0.6;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      header h1 { font-size: 2rem; }
+      .date-row { grid-template-columns: 1fr; }
+      .token-label { width: 72px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <div class="logo-mark">✈︎</div>
+      <h1>Holiday Planner</h1>
+      <div class="gold-rule"><span>✦</span></div>
+      <p>Format your holiday dates, ready to paste into Apple Notes</p>
+    </header>
+
+    <!-- 1. Date Range -->
+    <div class="card">
+      <div class="card-title">
+        <span class="step-badge">1</span> Date Range
+      </div>
+      <div class="date-row">
+        <div>
+          <label class="field-label" for="startDate">Start date</label>
+          <input type="date" id="startDate">
+        </div>
+        <div>
+          <label class="field-label" for="endDate">End date</label>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Date Format -->
+    <div class="card">
+      <div class="card-title">
+        <span class="step-badge">2</span> Date Format
+        <span style="font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:auto">drag to reorder</span>
+      </div>
+      <div class="tokens-list" id="tokensList"></div>
+      <div class="separator-row">
+        <span class="separator-label">Separator</span>
+        <div class="sep-options" id="separatorOptions"></div>
+      </div>
+      <div class="format-preview">
+        Preview: <strong id="previewText">Monday 28th April 2026</strong>
+      </div>
+    </div>
+
+    <!-- 3. Style -->
+    <div class="card">
+      <div class="card-title"><span class="step-badge">3</span> Text Style</div>
+      <div class="style-row">
+        <button class="style-toggle" id="boldBtn" title="Bold">B</button>
+        <button class="style-toggle" id="underlineBtn" title="Underline">U</button>
+        <button class="style-toggle" id="italicBtn" title="Italic">I</button>
+        <div class="style-divider"></div>
+        <span class="size-label">Size</span>
+        <select class="size-select" id="fontSizeSelect">
+          <option value="11">11pt</option>
+          <option value="12">12pt</option>
+          <option value="14">14pt</option>
+          <option value="16" selected>16pt</option>
+          <option value="18">18pt</option>
+          <option value="20">20pt</option>
+          <option value="24">24pt</option>
+          <option value="28">28pt</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 4. Spacing -->
+    <div class="card">
+      <div class="card-title"><span class="step-badge">4</span> Spacing</div>
+      <div class="spacing-row">
+        <div class="stepper">
+          <button id="spacingDown" aria-label="Decrease">−</button>
+          <div class="stepper-val" id="spacingValue">3</div>
+          <button id="spacingUp" aria-label="Increase">+</button>
+        </div>
+        <span class="spacing-desc">blank lines between each date</span>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="generate-btn" id="generateBtn">
+      <span>✦</span> Generate Dates
+    </button>
+
+    <!-- Output -->
+    <div class="output-card">
+      <div class="output-header">
+        <span class="output-title">Ready to paste into Notes</span>
+        <button class="copy-btn" id="copyBtn">Copy All</button>
+      </div>
+      <div class="output-body" id="outputBody">
+        <span class="empty-msg">Your formatted dates will appear here…</span>
+      </div>
+    </div>
+
+    <footer>polaris.domains · Holiday Planner</footer>
+  </div>
+
+  <script>
+    // ── State ──
+    let spacing = 3;
+    let separator = ' ';
+    let bold = false;
+    let underline = true;
+    let italic = false;
+    let fontSize = 16;
+
+    // Token definitions (order matters for display)
+    const tokenDefs = {
+      weekday: {
+        label: 'Day name',
+        options: [
+          { label: 'Monday',  value: 'long'  },
+          { label: 'Mon',     value: 'short' },
+          { label: 'Off',     value: 'off',  isOff: true }
+        ],
+        active: 'long'
+      },
+      day: {
+        label: 'Day no.',
+        options: [
+          { label: '28',   value: 'numeric'  },
+          { label: '28th', value: 'ordinal'  }
+        ],
+        active: 'ordinal'
+      },
+      month: {
+        label: 'Month',
+        options: [
+          { label: 'April', value: 'long'    },
+          { label: 'Apr',   value: 'short'   },
+          { label: '04',    value: 'numeric' }
+        ],
+        active: 'long'
+      },
+      year: {
+        label: 'Year',
+        options: [
+          { label: '2026', value: 'full'  },
+          { label: "'26",  value: 'short' },
+          { label: 'Off',  value: 'off',  isOff: true }
+        ],
+        active: 'full'
+      }
+    };
+
+    let tokenOrder = ['weekday', 'day', 'month', 'year'];
+
+    const separatorOpts = [
+      { label: 'Space',    value: ' '   },
+      { label: ', ',       value: ', '  },
+      { label: ' / ',      value: ' / ' },
+      { label: ' — ',      value: ' — ' }
+    ];
+
+    // ── Helpers ──
+    const DAYS_LONG   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const DAYS_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const MONTHS_LONG  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function ordinal(n) {
+      const s = ['th','st','nd','rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function formatDate(date) {
+      const parts = tokenOrder.map(key => {
+        const tok = tokenDefs[key];
+        if (tok.active === 'off') return null;
+        switch (key) {
+          case 'weekday':
+            return tok.active === 'long' ? DAYS_LONG[date.getDay()] : DAYS_SHORT[date.getDay()];
+          case 'day':
+            return tok.active === 'ordinal' ? ordinal(date.getDate()) : String(date.getDate());
+          case 'month':
+            if (tok.active === 'long')    return MONTHS_LONG[date.getMonth()];
+            if (tok.active === 'short')   return MONTHS_SHORT[date.getMonth()];
+            return String(date.getMonth() + 1).padStart(2, '0');
+          case 'year':
+            return tok.active === 'full'
+              ? String(date.getFullYear())
+              : '\u2019' + String(date.getFullYear()).slice(2);
+        }
+      }).filter(Boolean);
+      return parts.join(separator);
+    }
+
+    function dateRange(start, end) {
+      const dates = [];
+      const cur = new Date(start);
+      while (cur <= end) { dates.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
+      return dates;
+    }
+
+    function localDate(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    // ── Render Tokens ──
+    let dragSrc = null;
+
+    function renderTokens() {
+      const list = document.getElementById('tokensList');
+      list.innerHTML = '';
+
+      tokenOrder.forEach(key => {
+        const tok = tokenDefs[key];
+        const row = document.createElement('div');
+        row.className = 'token-row';
+        row.draggable = true;
+        row.dataset.key = key;
+
+        row.addEventListener('dragstart', e => {
+          dragSrc = key;
+          setTimeout(() => row.classList.add('dragging'), 0);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => row.classList.remove('dragging'));
+        row.addEventListener('dragover', e => { e.preventDefault(); row.classList.add('drag-over'); });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', e => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          if (!dragSrc || dragSrc === key) return;
+          const fi = tokenOrder.indexOf(dragSrc);
+          const ti = tokenOrder.indexOf(key);
+          tokenOrder.splice(fi, 1);
+          tokenOrder.splice(ti, 0, dragSrc);
+          dragSrc = null;
+          renderTokens();
+          updatePreview();
+        });
+
+        const handle = document.createElement('span');
+        handle.className = 'drag-handle';
+        handle.textContent = '⠿';
+
+        const label = document.createElement('span');
+        label.className = 'token-label';
+        label.textContent = tok.label;
+
+        const opts = document.createElement('div');
+        opts.className = 'token-options';
+
+        tok.options.forEach(opt => {
+          const btn = document.createElement('button');
+          const isActive = tok.active === opt.value;
+          btn.className = 'tok-btn' + (isActive ? ' active' : '') + (opt.isOff && isActive ? ' is-off' : '');
+          btn.textContent = opt.label;
+          btn.addEventListener('click', () => {
+            tok.active = opt.value;
+            renderTokens();
+            updatePreview();
+          });
+          opts.appendChild(btn);
+        });
+
+        row.appendChild(handle);
+        row.appendChild(label);
+        row.appendChild(opts);
+        list.appendChild(row);
+      });
+    }
+
+    // ── Render Separators ──
+    function renderSeparators() {
+      const container = document.getElementById('separatorOptions');
+      container.innerHTML = '';
+      separatorOpts.forEach(sep => {
+        const btn = document.createElement('button');
+        btn.className = 'tok-btn' + (separator === sep.value ? ' active' : '');
+        btn.textContent = sep.label;
+        btn.addEventListener('click', () => {
+          separator = sep.value;
+          renderSeparators();
+          updatePreview();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    // ── Preview ──
+    function updatePreview() {
+      const sample = new Date(2026, 3, 27); // Monday 27 April 2026
+      document.getElementById('previewText').textContent = formatDate(sample);
+    }
+
+    // ── Style Toggles ──
+    function initStyles() {
+      const boldBtn      = document.getElementById('boldBtn');
+      const underlineBtn = document.getElementById('underlineBtn');
+      const italicBtn    = document.getElementById('italicBtn');
+
+      underlineBtn.classList.add('active'); // default
+
+      boldBtn.addEventListener('click', () => {
+        bold = !bold;
+        boldBtn.classList.toggle('active', bold);
+      });
+      underlineBtn.addEventListener('click', () => {
+        underline = !underline;
+        underlineBtn.classList.toggle('active', underline);
+      });
+      italicBtn.addEventListener('click', () => {
+        italic = !italic;
+        italicBtn.classList.toggle('active', italic);
+      });
+      document.getElementById('fontSizeSelect').addEventListener('change', e => {
+        fontSize = parseInt(e.target.value);
+      });
+    }
+
+    // ── Spacing ──
+    function initSpacing() {
+      document.getElementById('spacingDown').addEventListener('click', () => {
+        if (spacing > 0) { spacing--; document.getElementById('spacingValue').textContent = spacing; }
+      });
+      document.getElementById('spacingUp').addEventListener('click', () => {
+        if (spacing < 10) { spacing++; document.getElementById('spacingValue').textContent = spacing; }
+      });
+    }
+
+    // ── Generate ──
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const sv = document.getElementById('startDate').value;
+      const ev = document.getElementById('endDate').value;
+
+      if (!sv || !ev) { alert('Please pick both a start and end date.'); return; }
+
+      const start = localDate(sv);
+      const end   = localDate(ev);
+
+      if (start > end) { alert('Start date must be before (or equal to) end date.'); return; }
+
+      const dates = dateRange(start, end);
+      const body  = document.getElementById('outputBody');
+      body.innerHTML = '';
+
+      // Build inline styles for date headings
+      const styles = [
+        bold      ? 'font-weight:bold'         : 'font-weight:normal',
+        underline ? 'text-decoration:underline' : 'text-decoration:none',
+        italic    ? 'font-style:italic'         : 'font-style:normal',
+        `font-size:${fontSize}pt`,
+        'display:block'
+      ].join(';');
+
+      dates.forEach((date, i) => {
+        const span = document.createElement('span');
+        span.style.cssText = styles;
+        span.textContent = formatDate(date);
+        body.appendChild(span);
+
+        if (i < dates.length - 1) {
+          for (let s = 0; s < spacing; s++) {
+            const br = document.createElement('span');
+            br.style.cssText = 'display:block;line-height:1.6em';
+            br.innerHTML = '&nbsp;';
+            body.appendChild(br);
+          }
+        }
+      });
+
+      // Smooth scroll to output
+      document.querySelector('.output-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // ── Copy ──
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      const body = document.getElementById('outputBody');
+      if (body.querySelector('.empty-msg')) return;
+
+      const btn = document.getElementById('copyBtn');
+
+      try {
+        // Rich text copy — preserves bold/underline when pasting into Notes
+        const html = `<html><body>${body.innerHTML}</body></html>`;
+        const text = body.innerText;
+
+        if (navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              'text/html':  new Blob([html],  { type: 'text/html'  }),
+              'text/plain': new Blob([text], { type: 'text/plain' })
+            })
+          ]);
+        } else {
+          throw new Error('ClipboardItem not supported');
+        }
+      } catch {
+        // Fallback: select & copy
+        try {
+          const range = document.createRange();
+          range.selectNodeContents(body);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          document.execCommand('copy');
+          sel.removeAllRanges();
+        } catch {
+          await navigator.clipboard.writeText(body.innerText).catch(() => {});
+        }
+      }
+
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy All';
+        btn.classList.remove('copied');
+      }, 2500);
+    });
+
+    // ── Init ──
+    renderTokens();
+    renderSeparators();
+    updatePreview();
+    initStyles();
+    initSpacing();
+
+    // Default date range: today → today + 7
+    const today = new Date();
+    const next  = new Date(today);
+    next.setDate(today.getDate() + 7);
+    const fmt = d => d.toISOString().split('T')[0];
+    document.getElementById('startDate').value = fmt(today);
+    document.getElementById('endDate').value   = fmt(next);
+  </script>
+</body>
+</html>
