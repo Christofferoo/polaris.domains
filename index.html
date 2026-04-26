@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>polaris.domains</title>
+  <link href="https://fonts.googleapis.com/css2?family=Style+Script&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #0b0f1a;
+      --deep: #111827;
+      --gold: #c9a96e;
+      --gold-light: #e2c98a;
+      --text: #d4d8e2;
+      --muted: #6b7280;
+      --nav-h: 60px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--navy);
+      color: var(--text);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+    }
+
+    /* ── Stars background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 72% 8%,  rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 40% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 42%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5%  75%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 60% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 30% 90%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 95% 65%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 35%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 22% 48%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 80% 25%, rgba(255,255,255,0.7) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 10% 10%, rgba(255,255,255,0.6) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: rgba(11, 15, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(201, 169, 110, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      z-index: 100;
+    }
+
+    .nav-item {
+      position: relative;
+    }
+
+    .nav-link {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.4rem 0;
+      transition: color 0.2s;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: 'Jost', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .nav-link:hover, .nav-link:focus { color: var(--gold); outline: none; }
+
+    .nav-link .chevron {
+      font-size: 0.55rem;
+      opacity: 0.6;
+      transition: transform 0.2s;
+    }
+
+    .nav-item:hover .chevron { transform: rotate(180deg); }
+
+    /* Dropdowns */
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 16px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--deep);
+      border: 1px solid rgba(201, 169, 110, 0.2);
+      border-radius: 6px;
+      min-width: 180px;
+      padding: 0.4rem 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s, transform 0.18s;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    .nav-item:hover .dropdown {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .dropdown a {
+      display: block;
+      padding: 0.55rem 1.2rem;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .dropdown a:hover {
+      color: var(--gold);
+      background: rgba(201, 169, 110, 0.06);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .star-icon {
+      font-size: 1.4rem;
+      color: var(--gold);
+      opacity: 0.7;
+      margin-bottom: 1.2rem;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.15); }
+    }
+
+    h1 {
+      font-family: 'Style Script', cursive;
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 400;
+      color: var(--gold-light);
+      line-height: 1;
+      text-shadow: 0 0 60px rgba(201, 169, 110, 0.25);
+      animation: fadeUp 1s ease both;
+    }
+
+    .tagline {
+      margin-top: 1.4rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--muted);
+      animation: fadeUp 1s 0.2s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Mobile nav ── */
+    @media (max-width: 600px) {
+      nav { gap: 1.2rem; }
+      .nav-link { font-size: 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-item">
+      <a class="nav-link" href="index.html">Home</a>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-link">Maxwell <span class="chevron">▼</span></button>
+      <div class="dropdown">
+        <a href="maxwell/page1.html">Page 1</a>
+        <a href="maxwell/page2.html">Page 2</a>
+        <a href="maxwell/mothersday2026.html">Mother's Day 2026</a>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-link">Apps <span class="chevron">▼</span></button>
+      <div class="dropdown">
+        <a href="apps/csv-to-json.html">CSV to JSON</a>
+        <a href="apps/json-to-csv.html">JSON to CSV</a>
+        <a href="apps/holiday-planner.html">Holiday Planner</a>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <a class="nav-link" href="quotes/quotes.json" target="_blank">Quotes</a>
+    </div>
+  </nav>
+
+  <main class="hero">
+    <div class="star-icon">✦</div>
+    <h1>polaris.domains</h1>
+    <p class="tagline">Navigate by the north star</p>
+  </main>
+
+</body>
+</html>
